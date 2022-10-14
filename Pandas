@@ -1,0 +1,95 @@
+"""Ideazione interrogazioni per base di dati di una web app relativa ad un e-commerce di prodotti informatici,
+sviluppo applicazione in Python con connessione a DBMS MySQL con Pandas e con il connettore,
+implementazione interrogazioni ideate tramite funzioni ad-hoc. Vincolo: proporre almeno 10 interrogazioni identiche,
+sia utilizzando i DataFrame di Pandas che utilizzando i cursori. Il database è fornito in input."""
+# Parte 2: Interrogazioni utilizzando Pandas
+
+from sqlalchemy import create_engine
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#Connessione
+db_connection_str = 'mysql+pymysql://root:Bylgariq11!@127.0.0.1/ecommerce'
+db_connection = create_engine(db_connection_str)
+
+
+#Definiamo il metodo di inserimento query
+def insert_query(query_stmt):
+    result = pd.read_sql(query_stmt, db_connection)
+    return result
+
+# 1. Vogliamo raggruppare in ordine crescente per categoria i prodotti che abbiamo in quantità più della media utilizzando 'sort_values'
+first_stmt = "select c.nome, p.quantita from categoria as c join Prodotto as p on c.cid = p.cid where p.quantita>(select AVG(quantita) from Prodotto);"
+p_interrogazione = insert_query(first_stmt).sort_values(by=['quantita'])
+print('\nTabella quantita prodotto per cattegoria\n', p_interrogazione)
+
+# 2. Vogliamo vedere il numero di utenti abbonati alla nostra newsletter per citta utilizzando 'value_counts'
+second_stmt = "select i.citta from indirizzo as i join utente as u on i.uid = u.uid where u.newsletter = 1;"
+s_interrogazione = insert_query(second_stmt).value_counts()
+print('\nNumero di abbonati alla newsletter per citta\n',s_interrogazione)
+
+#3. Vogliamo generare una lista dei tutti prodotti 'ASUS' disponibili sul nostro sito per includere l'elenco alla promozione utilizzando 'to.csc'
+third_stmt = "select p.nome from prodotto as p join marca as m on p.mid=m.mid  where m.nome = 'ASUS';"
+t_interrogazione = insert_query(third_stmt)
+generare_file = t_interrogazione.to_csv("C:\pythonProject\promozione.csv", sep =',', header = True)
+print('\nLista prodotti ASUS\n',t_interrogazione)
+
+#4. Vogliamo vedere i prodotti più costosi disponibile sul sito per offrire spedizione premium gratuita
+fourth_stmt = "select p.nome, pr.valore from prodotto as p join prezzo as pr on p.pid = pr.pid where pr.valore > 0.99*(select Max(valore) from prezzo);"
+col= ['uno', 'due', 'tre', 'quattro', 'cinque', 'sei', 'sette', 'otto', 'nove', 'dieci']
+q_interrogazione = insert_query(fourth_stmt).set_index([col])
+print('\nSpedizione premium gratuita per i seguenti prodotti\n', q_interrogazione)
+
+#5. Vogliamo estrarre ID utente per gli orditi che sono stati spediti
+fifth_stmt = "select u.uid from utente as u join ordine as o on u.uid=o.uid join stato as s on o.stid=s.stid where s.stid = 'spedito';"
+qu_interrogazione = insert_query(fifth_stmt)
+print('\nOrdini spediti\n', qu_interrogazione)
+
+#6. Vogliamo creare una tabella degli utenti che hanno acquinstato precedentemente sul nostri sito e sono iscritti alla news letter per mandarli un buono sconto
+sixth_stmt = "select distinct u.nome, u.cognome, u.email from utente as u join ordine as o on u.uid=o.uid where u.newsletter =1;"
+se_interrogazione = insert_query(sixth_stmt)
+print('\nBuono sconto disponibile per i seguenti utenti\n',se_interrogazione)
+
+#7. Statistiche sul prezzo dei prodotti disponibili utilizzando 'describe'
+seventh_stmt = "select pr.valore from prezzo as pr join prodotto as p on p.pid = pr.pid;"
+set_interrogazione = insert_query(seventh_stmt).describe()
+print('\nStatistiche prezzo\n',set_interrogazione)
+
+
+#8. Statistiche sul prezzo dei prodotti disponibili nella cattegoria 'RAM DDR 400' utilizzando 'describe'
+eighth_stmt = "select pr.valore from prezzo as pr join prodotto as p on p.pid = pr.pid where cid=70;"
+o_interrogazione = insert_query(eighth_stmt).describe()
+print('\nStatistiche prezzo per categoria \'RAM DDR 400\'\n',o_interrogazione)
+
+
+#9. Vogliamo calcolare il numero di ordini totali per Novembre 2011
+nineth_stmt = "select count(time) from ordine where time like '2011-11____________';"
+n_interrogazione = insert_query(nineth_stmt)
+print('\nNumero ordini Novembre 2011\n',n_interrogazione)
+
+#10.Vogliamo calcolare il numero di ordini totali per Dicembre 2011
+tenth_stmt = "select count(time) from ordine where time like '2011-12____________';"
+de_interrogazione = insert_query(tenth_stmt)
+print('\nNumero ordini Dicembre 2011\n',de_interrogazione)
+
+# Compariamo i risultati otteniti in punto 7 e 8
+import pandas as pd
+import matplotlib.pyplot as plt
+
+dat = {'Category': ['November', 'December'],
+        'Values': [19, 6]}
+
+df1 = pd.DataFrame(dat, columns=['Category', 'Values'])
+df1.plot(x='Category', y='Values', kind='line')
+plt.show()
+
+# Compariamo i risultati otteniti in punto 9 e 10
+import pandas as pd
+import matplotlib.pyplot as plt
+
+data = {'Month': ['Min all', 'Min cat','Mean all', 'Mean cat','Max all', 'Max cat'],
+        'Price': [8.8, 67.1, 968.3, 889.6, 1999.0, 1949.0]}
+
+df = pd.DataFrame(data, columns=['Month', 'Price'])
+df.plot(x='Month', y='Price', kind='bar')
+plt.show()
