@@ -1,0 +1,105 @@
+"""Ideazione interrogazioni per base di dati di una web app relativa ad un e-commerce di prodotti informatici,
+sviluppo applicazione in Python con connessione a DBMS MySQL con Pandas e con il connettore,
+implementazione interrogazioni ideate tramite funzioni ad-hoc. Vincolo: proporre almeno 10 interrogazioni identiche,
+sia utilizzando i DataFrame di Pandas che utilizzando i cursori. Il database è fornito in input."""
+
+# Parte 1: Interrogazioni utilizzando i cursori
+
+import sys
+
+import mysql.connector
+
+#definiamo il metodo per la conessione
+def connection_database( user, password, host, database):
+    try:
+        conn = mysql.connector.connect(user = user, password =password, host = host, database = database)
+        return conn
+    except mysql.connector.errors.databaseError as db_error:
+        print(db_error.msg)
+        sys.exit()
+
+#definiamo il metodo per chiudere la conessione
+def close_connection(connection):
+    connection.close()
+
+#definiamo il metodo per calcolare la media
+def calculate_average(num):
+    sum_num = 0
+    for i in num:
+        sum_num = sum_num + i
+
+    avg = sum_num / len(num)
+    return avg
+
+conn = connection_database ('root', 'Bylgariq11!', '127.0.0.1', 'ecommerce')
+
+#Definiamo il metodo di inserimento query
+def insert_query(query_stmt):
+    cursor = conn.cursor()
+    cursor.execute(query_stmt)
+    result = cursor.fetchall()
+    return result
+    conn.close()
+
+# 1. Vogliamo raggruppare in ordine crescente per categoria i prodotti che abbiamo in quantità più della media utilizzando sorted
+first_stmt = "select c.nome, p.quantita from categoria as c join prodotto as p on c.cid = p.cid where p.quantita>(select AVG(quantita) from Prodotto);"
+p_interrogazione = sorted(insert_query(first_stmt))
+print('\n1.Quantita prodotto per cattegoria\n', p_interrogazione)
+
+
+
+# 2. Vogliamo vedere il numero di utenti abbonati alla nostra newsletter per citta
+second_stmt = "select i.citta from indirizzo as i join utente as u on i.uid = u.uid where u.newsletter = 1 AND i.citta = 'Roma';"
+s_interrogazione = len(insert_query(second_stmt))
+print('\n2.Numero di abbonati alla newsletter per citta\n',s_interrogazione)
+
+#3. Vogliamo generare una lista dei tutti prodotti 'ASUS' disponibili sul nostro sito per includere l'elenco alla promozione
+third_stmt = "select p.nome from prodotto as p join marca as m on p.mid=m.mid  where m.nome = 'ASUS';"
+t_interrogazione = insert_query(third_stmt)
+print('\n3.Lista prodotti ASUS\n',t_interrogazione)
+
+#4. Vogliamo vedere i prodotti più costosi disponibile sul sito per offrire spedizione premium gratuita
+fourth_stmt = "select p.nome, pr.valore from prodotto as p join prezzo as pr on p.pid = pr.pid where pr.valore > 0.99*(select Max(valore) from prezzo);"
+q_interrogazione = insert_query(fourth_stmt)
+print('\n4.Spedizione premium gratuita per i seguenti prodotti\n', q_interrogazione)
+
+#5. Vogliamo estrarre ID utente per gli orditi che sono stati spediti
+fifth_stmt = "select u.uid from utente as u join ordine as o on u.uid=o.uid join stato as s on o.stid=s.stid where s.stid = 'spedito';"
+qu_interrogazione = insert_query(fifth_stmt)
+print('\n5.Ordini spediti\n', qu_interrogazione)
+
+#6. Vogliamo creare una tabella degli utenti che hanno acquinstato precedentemente sul nostri sito e sono iscritti alla news letter per mandarli un buono sconto
+sixth_stmt = "select distinct u.nome, u.cognome, u.email from utente as u join ordine as o on u.uid=o.uid where u.newsletter =1;"
+se_interrogazione = insert_query(sixth_stmt)
+print('\n6.Buono sconto disponibile per i seguenti utenti\n',se_interrogazione)
+
+#7. Statistiche sul prezzo dei prodotti disponibili utilizzando
+seventh_stmt = "select pr.valore from prezzo as pr join prodotto as p on p.pid = pr.pid;"
+set_interrogazione = insert_query(seventh_stmt)
+l = [list(tup) for tup in set_interrogazione]
+flat_list = []
+for sublist in l:
+    for item in sublist:
+        flat_list.append(item)
+print('\n7.Statistiche prezzo Media: \n',calculate_average(flat_list))
+
+#8. Statistiche sul prezzo dei prodotti disponibili nella cattegoria 'RAM DDR 400' utilizzando
+eighth_stmt = "select pr.valore from prezzo as pr join prodotto as p on p.pid = pr.pid where cid=70;"
+o_interrogazione = insert_query(eighth_stmt)
+l2 = [list(tup) for tup in o_interrogazione]
+flat_list2 = []
+for sublist in l2:
+    for item in sublist:
+        flat_list2.append(item)
+print('\n8.Statistiche prezzo per categoria Media \'RAM DDR 400\':\n',calculate_average(flat_list2))
+
+#9. Vogliamo calcolare il numero di ordini totali per Novembre 2011
+nineth_stmt = "select count(time) from ordine where time like '2011-11____________';"
+n_interrogazione = insert_query(nineth_stmt)
+print('\n9.Numero ordini Novembre 2011\n',n_interrogazione)
+
+#10.Vogliamo calcolare il numero di ordini totali per Dicembre 2011
+tenth_stmt = "select count(time) from ordine where time like '2011-12____________';"
+de_interrogazione = insert_query(tenth_stmt)
+print('\n10.Numero ordini Dicembre 2011\n',de_interrogazione)
+
